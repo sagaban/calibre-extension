@@ -52,3 +52,7 @@ extension/
   popup/, options/, ui.css, icons/
   vendor/Readability.js  # @mozilla/readability 0.6.0
 ```
+
+## Licencia
+
+[MIT](LICENSE). `extension/vendor/Readability.js` es de Mozilla y conserva su licencia Apache 2.0 (ver el encabezado del archivo).
