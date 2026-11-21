@@ -1,58 +1,63 @@
 # Send to Calibre
 
-Extensión para Brave/Chrome que convierte la página actual en un EPUB limpio (con Readability, como el modo lectura de Firefox) y lo agrega a tu biblioteca de Calibre con la etiqueta `articles`.
+A Brave/Chrome extension that turns the current web page into a clean EPUB (using Readability, like Firefox's Reader View) and adds it to your Calibre library, tagged `articles` by default.
 
-Sin build ni dependencias: la carpeta `extension/` se carga tal cual.
+No build step, no dependencies: load the `extension/` folder as is.
 
-## 1. Preparar Calibre (una sola vez)
+> The extension's UI is currently in Spanish.
 
-La extensión habla con el **Content Server** de Calibre.
+## 1. Set up Calibre (once)
 
-1. Calibre → **Preferencias → Compartir por la red**.
-2. Pestaña **Principal**: puerto `8080` (o el que quieras), marcá **Ejecutar el servidor automáticamente al iniciar calibre** y apretá **Iniciar servidor**.
-3. Pestaña **Avanzado**: activá **Permitir que conexiones locales sin autenticar hagan cambios** (`local_write`). Sin esto, Calibre rechaza la subida con 403.
-   - Alternativa: activar **Requerir usuario y contraseña** con autenticación **basic** (no *digest*) y cargar el usuario y la contraseña en las opciones de la extensión.
+The extension talks to Calibre's **Content Server**.
 
-> El puerto 9090 es el de "Conexión con dispositivo inalámbrico", no el Content Server.
+1. Calibre → **Preferences → Sharing over the net**.
+2. **Main** tab: pick a port (default `8080`), check **Run server automatically when calibre starts**, and click **Start server**.
+3. **Advanced** tab: enable **Allow un-authenticated local connections to make changes** (`local_write`). Without it, Calibre rejects uploads with a 403.
+   - Alternative: enable **Require username and password to access the Content server**, set the authentication mode to **basic** (not *digest*), make sure the user isn't read-only, and enter the credentials in the extension's options. Username/password are ignored if the server doesn't require authentication.
+4. Restart the server after changing these settings.
 
-## 2. Instalar en Brave
+> Port 9090 is Calibre's "Wireless device connection", not the Content Server.
 
-1. Abrí `brave://extensions`.
-2. Activá **Modo de desarrollador** (arriba a la derecha).
-3. **Cargar descomprimida** → elegí la carpeta `extension/`.
-4. Fijá el ícono en la barra. En **Opciones** apretá **Probar conexión** y elegí la biblioteca.
+## 2. Install in Brave
 
-## Uso
+1. Open `brave://extensions`.
+2. Turn on **Developer mode** (top right).
+3. **Load unpacked** → select the `extension/` folder.
+4. Pin the icon. In **Options**, click **Probar conexión** (test connection) and pick the library.
 
-- **Ícono** → podés editar el título y las etiquetas → **Enviar**.
-- **Clic derecho → Enviar página a Calibre** (usa las etiquetas por defecto).
-- **Alt+Shift+C** (se cambia en `brave://extensions/shortcuts`).
+## Usage
 
-El ícono muestra ✓ o ! al terminar.
+- **Toolbar icon** → optionally edit the title and tags → **Enviar** (send).
+- **Right-click → Enviar página a Calibre** (uses the default tags).
+- **Alt+Shift+C** (change it at `brave://extensions/shortcuts`).
 
-## Qué genera
+The icon badge shows ✓ or ! when done.
 
-- EPUB 3 (con NCX para lectores viejos): título, autor, sitio, fecha y link al original.
-- Las imágenes se descargan y se incrustan. WebP y AVIF se pasan a JPEG para que los lea un Kindle o Kobo.
-- La portada sale de `og:image` o, si no hay, de la primera imagen.
-- Metadatos: título, autor, editorial (el sitio), fecha, descripción, idioma, `dc:source` = URL y las etiquetas. Además, después de subirlo, las etiquetas se fijan con `/cdb/set-fields`.
-- Si ya hay un libro con el mismo título, Calibre no lo agrega, salvo que actives **Permitir duplicados**.
+## What it produces
 
-## Estructura
+- EPUB 3 (with an NCX for older readers), with a header containing the title, author, site, date and a link to the original.
+- **Table of contents** built from the article's headings, nested by level.
+- **Images are embedded** in the EPUB (`OEBPS/images/`), so it reads offline. WebP/AVIF are converted to JPEG for e-reader compatibility. Images that fail to download (over 10 MB, over 15 s, or blocked) are dropped rather than left as remote links.
+- Embedded videos are replaced with a "▶ Video" link.
+- Cover from `og:image`, falling back to the first image.
+- Metadata: title, author, publisher (site name), date, description, language, `dc:source` = URL, and tags (as `dc:subject`; also set via `/cdb/set-fields` after upload).
+- If a book with the same title already exists, Calibre won't add it unless **Permitir duplicados** (allow duplicates) is enabled in Options.
+
+## Layout
 
 ```
 extension/
   manifest.json
-  background.js        # orquesta: extraer → imágenes → EPUB → subir
-  content/extract.js   # corre en la página: Readability + limpieza a XHTML
-  lib/epub.js          # arma el EPUB
-  lib/zip.js           # ZIP mínimo (CompressionStream)
-  lib/calibre.js       # cliente del Content Server (/cdb/add-book, /cdb/set-fields)
+  background.js        # orchestrates: extract → images → EPUB → upload
+  content/extract.js   # runs in the page: Readability + cleanup to XHTML, headings
+  lib/epub.js          # builds the EPUB (OPF, nav, NCX, TOC)
+  lib/zip.js           # minimal ZIP writer (CompressionStream)
+  lib/calibre.js       # Content Server client (/cdb/add-book, /cdb/set-fields)
   lib/settings.js
   popup/, options/, ui.css, icons/
   vendor/Readability.js  # @mozilla/readability 0.6.0
 ```
 
-## Licencia
+## License
 
-[MIT](LICENSE). `extension/vendor/Readability.js` es de Mozilla y conserva su licencia Apache 2.0 (ver el encabezado del archivo).
+[MIT](LICENSE). `extension/vendor/Readability.js` is by Mozilla and keeps its Apache 2.0 license (see the file header).
