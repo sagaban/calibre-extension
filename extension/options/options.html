@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<link rel="stylesheet" href="../ui.css" />
+</head>
+<body>
+  <label>URL del Content Server de Calibre
+    <input id="serverUrl" type="url" placeholder="http://localhost:8080" />
+  </label>
+  <label>Biblioteca
+    <select id="libraryId"><option value="">(la predeterminada del servidor)</option></select>
+    <p class="hint">Usá "Probar conexión" para cargar la lista.</p>
+  </label>
+  <label>Etiquetas por defecto (separadas por coma)
+    <input id="tags" type="text" />
+  </label>
+  <label>Usuario (opcional, solo autenticación Basic)
+    <input id="username" type="text" autocomplete="off" />
+  </label>
+  <label>Contraseña
+    <input id="password" type="password" autocomplete="off" />
+  </label>
+  <label class="inline"><input id="allowDuplicates" type="checkbox" /> Permitir duplicados (mismo título)</label>
+  <div class="row">
+    <button id="save">Guardar</button>
+    <button id="test" class="secondary">Probar conexión</button>
+  </div>
+  <p id="status" class="status"></p>
+  <script type="module" src="options.js"></script>
+</body>
+</html>

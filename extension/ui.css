@@ -1,0 +1,44 @@
+:root {
+  color-scheme: light dark;
+  --accent: #b5651d;
+  --ok: #2e7d32;
+  --err: #c62828;
+}
+body {
+  font: 13px/1.4 system-ui, -apple-system, sans-serif;
+  margin: 0;
+  padding: 14px;
+}
+body.popup { width: 320px; }
+h1 { font-size: 15px; margin: 0 0 10px; }
+label { display: block; margin-bottom: 10px; font-weight: 600; }
+label.inline { display: flex; gap: 6px; align-items: center; font-weight: 400; }
+input[type="text"], input[type="url"], input[type="password"], select {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  margin-top: 4px;
+  padding: 6px 8px;
+  font: inherit;
+  font-weight: 400;
+  border: 1px solid #8884;
+  border-radius: 6px;
+}
+button {
+  font: inherit;
+  font-weight: 600;
+  padding: 7px 14px;
+  border: 0;
+  border-radius: 6px;
+  background: var(--accent);
+  color: #fff;
+  cursor: pointer;
+}
+button:disabled { opacity: 0.6; cursor: default; }
+button.secondary { background: #8883; color: inherit; }
+.status { min-height: 1.4em; margin: 10px 0 4px; white-space: pre-wrap; }
+.status.ok { color: var(--ok); }
+.status.err { color: var(--err); }
+.small { font-size: 12px; color: inherit; opacity: 0.7; }
+.hint { font-size: 12px; opacity: 0.7; font-weight: 400; margin: 2px 0 0; }
+.row { display: flex; gap: 8px; }
