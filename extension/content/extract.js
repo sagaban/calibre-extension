@@ -20,6 +20,11 @@
   const clone = document.cloneNode(true);
   for (const img of document.querySelectorAll(`img[${STAMP}]`)) img.removeAttribute(STAMP);
 
+  // Readability drops elements whose class matches "header" etc. as page
+  // chrome; that kills real section headings (e.g. Substack's
+  // "header-anchor-post"). Headings don't need their classes.
+  clone.querySelectorAll("h1, h2, h3, h4, h5, h6").forEach((h) => h.removeAttribute("class"));
+
   const parsed = new Readability(clone, { keepClasses: false }).parse();
 
   // Fallback: whole body if Readability can't find an article.
@@ -138,6 +143,19 @@
     }
   });
 
+  // Headings → table of contents entries (need unique, XML-valid ids).
+  const usedIds = new Set();
+  const headings = [];
+  root.querySelectorAll("h1, h2, h3, h4, h5, h6").forEach((h, i) => {
+    const text = h.textContent.replace(/\s+/g, " ").trim();
+    if (!text) return;
+    let id = h.getAttribute("id");
+    if (!id || !/^[A-Za-z_][\w.-]*$/.test(id) || usedIds.has(id)) id = `toc-${i}`;
+    usedIds.add(id);
+    h.setAttribute("id", id);
+    headings.push({ level: Number(h.tagName[1]), id, text });
+  });
+
   const serializer = new XMLSerializer();
   const bodyXhtml = [...root.childNodes].map((n) => serializer.serializeToString(n)).join("");
 
@@ -152,6 +170,7 @@
     published: (parsed?.publishedTime || meta("article:published_time", "datePublished") || "").trim(),
     excerpt: (parsed?.excerpt || meta("description", "og:description") || "").trim(),
     bodyXhtml,
+    headings,
     images,
     cover: cover ? abs(cover) : null,
   };

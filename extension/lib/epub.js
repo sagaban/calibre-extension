@@ -67,12 +67,27 @@ ${a.bodyXhtml}
 </html>
 `;
 
+  // TOC: article title first, then its headings nested by level.
+  const toc = [{ text: a.title, href: "article.xhtml", children: [] }, ...tocTree(a.headings ?? [], a.title)];
+  let order = 0;
+  const navList = (items) =>
+    `<ol>${items
+      .map((n) => `<li><a href="${esc(n.href)}">${esc(n.text)}</a>${n.children.length ? navList(n.children) : ""}</li>`)
+      .join("")}</ol>`;
+  const ncxPoints = (items) =>
+    items
+      .map((n) => {
+        order++;
+        return `<navPoint id="p${order}" playOrder="${order}"><navLabel><text>${esc(n.text)}</text></navLabel><content src="${esc(n.href)}" />${ncxPoints(n.children)}</navPoint>`;
+      })
+      .join("\n");
+
   const nav = `<?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops">
 <head><meta charset="utf-8" /><title>${esc(a.title)}</title></head>
 <body>
-<nav epub:type="toc" id="toc"><ol><li><a href="article.xhtml">${esc(a.title)}</a></li></ol></nav>
+<nav epub:type="toc" id="toc">${navList(toc)}</nav>
 </body>
 </html>
 `;
@@ -81,7 +96,9 @@ ${a.bodyXhtml}
 <ncx xmlns="http://www.daisy.org/z3986/2005/ncx/" version="2005-1">
 <head><meta name="dtb:uid" content="urn:uuid:${uuid}" /></head>
 <docTitle><text>${esc(a.title)}</text></docTitle>
-<navMap><navPoint id="p1" playOrder="1"><navLabel><text>${esc(a.title)}</text></navLabel><content src="article.xhtml" /></navPoint></navMap>
+<navMap>
+${ncxPoints(toc)}
+</navMap>
 </ncx>
 `;
 
@@ -137,6 +154,26 @@ ${a.bodyXhtml}
     { name: "OEBPS/article.xhtml", data: article },
     ...a.images.map((img) => ({ name: `OEBPS/${img.href}`, data: img.data, store: true })),
   ]);
+}
+
+/**
+ * Turns a flat heading list into a tree: a heading nests under the closest
+ * previous heading with a smaller level. Skips a heading that just repeats
+ * the article title.
+ * @param {{level: number, id: string, text: string}[]} headings
+ */
+function tocTree(headings, title) {
+  const norm = (s) => s.toLowerCase().replace(/\W+/g, "");
+  const roots = [];
+  const stack = []; // [{level, node}]
+  for (const h of headings) {
+    if (norm(h.text) === norm(title)) continue;
+    const node = { text: h.text, href: `article.xhtml#${h.id}`, children: [] };
+    while (stack.length && stack.at(-1).level >= h.level) stack.pop();
+    (stack.length ? stack.at(-1).node.children : roots).push(node);
+    stack.push({ level: h.level, node });
+  }
+  return roots;
 }
 
 function hostOf(url) {
